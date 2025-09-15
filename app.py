@@ -81,11 +81,12 @@ if choice == "Predict":
 
     if st.button("Predict"):
         age = 2025 - year
-        brand_encoded = encoders['brand'].transform([brand])[0] if brand in encoders['brand'].classes_ else 0
-        fuel_encoded = encoders['fuel'].transform([fuel])[0] if fuel in encoders['fuel'].classes_ else 0
-        seller_encoded = encoders['seller_type'].transform([default_seller])[0]
-        transmission_encoded = encoders['transmission'].transform([transmission])[0]
-        owner_encoded = encoders['owner'].transform([default_owner])[0]
+        brand_encoded = safe_encode(encoders['brand'], brand)
+        fuel_encoded = safe_encode(encoders['fuel'], fuel)
+        seller_encoded = safe_encode(encoders['seller_type'], default_seller)
+        transmission_encoded = safe_encode(encoders['transmission'], transmission)
+        owner_encoded = safe_encode(encoders['owner'], default_owner)
+
 
         # Condition factor
         condition_factor = {"Excellent": 1.05, "Good": 1.0, "Average": 0.9, "Poor": 0.8}
@@ -143,4 +144,5 @@ elif choice == "About":
     
     **Developed with ❤️ using Streamlit, Scikit-Learn, Pandas, Matplotlib & Seaborn**
     """)
+
 

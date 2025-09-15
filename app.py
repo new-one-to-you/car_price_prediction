@@ -76,13 +76,6 @@ st.set_page_config(
 # Sidebar
 st.sidebar.title("🚗 Car Price Prediction")
 st.sidebar.image("https://cdn-icons-png.flaticon.com/512/743/743007.png", width=120)
-st.sidebar.markdown("""
-**Developed using:**  
-- Streamlit  
-- Pandas & NumPy  
-- Scikit-Learn  
-- Matplotlib & Seaborn
-""")
 menu = ["Predict", "Graphs", "View Data", "About"]
 choice = st.sidebar.radio("Navigation", menu)
 
@@ -99,13 +92,12 @@ if choice == "Predict":
             brand = st.text_input("Brand (e.g., Maruti, Hyundai)")
             year = st.number_input("Year of Manufacture", min_value=1980, max_value=2025, value=2019)
             km_driven = st.number_input("KM Driven", min_value=0, value=50000)
-        
         with col2:
             fuel = st.text_input("Fuel Type (Petrol, Diesel, CNG)")
             transmission = st.text_input("Transmission Type (Manual/Automatic)")
             condition = st.selectbox("Car Condition", ["Excellent", "Good", "Average", "Poor"])
             seats = st.number_input("Seats (optional)", min_value=2, max_value=10, value=default_seats)
-    
+
     if st.button("Predict Price"):
         age = 2025 - year
         brand_encoded = safe_encode(encoders['brand'], brand)
@@ -126,9 +118,27 @@ if choice == "Predict":
         base_price = model.predict(input_vec)[0]
         final_price = base_price * condition_multiplier
 
-        # Display result in a metric box
+        # Display result
         st.markdown("### 💰 Predicted Selling Price")
         st.metric(label="Price (INR)", value=f"₹ {round(final_price,2)}")
+
+        # Display Car Details
+        st.markdown("### 🚗 Car Details")
+        details = {
+            "Brand": brand,
+            "Year": year,
+            "KM Driven": km_driven,
+            "Fuel Type": fuel,
+            "Transmission": transmission,
+            "Seats": seats,
+            "Condition": condition
+        }
+        col1, col2 = st.columns(2)
+        for i, (key, value) in enumerate(details.items()):
+            if i % 2 == 0:
+                col1.markdown(f"**{key}:** {value}")
+            else:
+                col2.markdown(f"**{key}:** {value}")
 
 # ============================
 # Graphs Section
@@ -164,5 +174,9 @@ This **Car Price Prediction App** predicts the selling price of used cars using 
 - Explore dataset with interactive scatter plots
 - User-friendly layout with metric boxes and side navigation
 
-**Developed with ❤️ using:** Streamlit, Pandas, NumPy, Scikit-Learn, Matplotlib & Seaborn
+**Developed with ❤️ using:**  
+- Streamlit  
+- Pandas & NumPy  
+- Scikit-Learn  
+- Matplotlib & Seaborn
     """)

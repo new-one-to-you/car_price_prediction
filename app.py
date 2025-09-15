@@ -12,7 +12,7 @@ import seaborn as sns
 # ============================
 @st.cache_data
 def load_data():
-    df = pd.read_csv("Car Details v3.csv")  # Update with your CSV
+    df = pd.read_csv("Car details v3.csv")  # Update with your CSV
     df = df.dropna(subset=['engine', 'mileage', 'max_power', 'seats'])
     df['mileage'] = df['mileage'].str.extract(r'(\d+\.?\d*)').astype(float)
     df['engine'] = df['engine'].str.extract(r'(\d+\.?\d*)').astype(float)
@@ -143,3 +143,4 @@ elif choice == "About":
     
     **Developed with ❤️ using Streamlit, Scikit-Learn, Pandas, Matplotlib & Seaborn**
     """)
+

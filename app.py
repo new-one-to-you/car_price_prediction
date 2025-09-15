@@ -8,11 +8,20 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # ============================
+# Safe encode function
+# ============================
+def safe_encode(encoder, value):
+    if value in encoder.classes_:
+        return encoder.transform([value])[0]
+    else:
+        return 0  # Default encoding for unseen labels
+
+# ============================
 # 1. Load & Clean Dataset
 # ============================
 @st.cache_data
 def load_data():
-    df = pd.read_csv("Car details v3.csv")  # Update with your CSV
+    df = pd.read_csv("Car details v3.csv")  # Make sure CSV is uploaded
     df = df.dropna(subset=['engine', 'mileage', 'max_power', 'seats'])
     df['mileage'] = df['mileage'].str.extract(r'(\d+\.?\d*)').astype(float)
     df['engine'] = df['engine'].str.extract(r'(\d+\.?\d*)').astype(float)
@@ -42,7 +51,7 @@ features = ['age', 'km_driven', 'mileage', 'engine', 'max_power', 'seats'] + cat
 X = df[features]
 y = df['selling_price']
 
-# Train Model
+# Train Linear Regression model
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 model = LinearRegression()
 model.fit(X_train, y_train)
@@ -75,8 +84,8 @@ if choice == "Predict":
         km_driven = st.number_input("KM Driven", min_value=0, value=50000)
 
     with col2:
-        fuel = st.selectbox("Fuel Type", df['fuel'].astype(str).unique())
-        transmission = st.selectbox("Transmission", df['transmission'].astype(str).unique())
+        fuel = st.text_input("Fuel Type (e.g., Petrol, Diesel, CNG)")
+        transmission = st.text_input("Transmission Type (Manual/Automatic)")
         condition = st.selectbox("Car Condition", ["Excellent", "Good", "Average", "Poor"])
 
     if st.button("Predict"):
@@ -87,7 +96,6 @@ if choice == "Predict":
         transmission_encoded = safe_encode(encoders['transmission'], transmission)
         owner_encoded = safe_encode(encoders['owner'], default_owner)
 
-
         # Condition factor
         condition_factor = {"Excellent": 1.05, "Good": 1.0, "Average": 0.9, "Poor": 0.8}
         condition_multiplier = condition_factor.get(condition, 1.0)
@@ -97,12 +105,11 @@ if choice == "Predict":
                                default_max_power, default_seats,
                                fuel_encoded, seller_encoded, transmission_encoded,
                                owner_encoded, brand_encoded]])
-        
+
         base_price = model.predict(input_vec)[0]
         final_price = base_price * condition_multiplier
 
         st.subheader(f"Predicted Selling Price: ₹{round(final_price, 2)}")
-
         st.subheader("Cleaned Dataset")
         st.dataframe(df, use_container_width=True)
 
@@ -113,7 +120,7 @@ elif choice == "Graphs":
     st.header("📊 Graphs & Scatter Plots")
     x_axis = st.selectbox("Select X-axis", df.columns)
     y_axis = st.selectbox("Select Y-axis", df.columns)
-    
+
     plt.figure(figsize=(8,5))
     plt.scatter(df[x_axis], df[y_axis], alpha=0.6, color='green')
     plt.xlabel(x_axis)
@@ -135,14 +142,12 @@ elif choice == "About":
     st.header("ℹ️ About this App")
     st.write("""
     This **Car Price Prediction App** predicts the selling price of used cars based on important features.
-    
+
     ### Features:
-    - Predict car price using **Random Forest Regressor**
+    - Predict car price using **Linear Regression**
     - Auto-fill default values for mileage, engine, power, seats
     - Adjust price based on car condition (Excellent / Good / Average / Poor)
     - Explore dataset and scatter plots
-    
+
     **Developed with ❤️ using Streamlit, Scikit-Learn, Pandas, Matplotlib & Seaborn**
     """)
-
-

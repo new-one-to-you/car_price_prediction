@@ -21,7 +21,7 @@ def safe_encode(encoder, value):
 # ============================
 @st.cache_data
 def load_data():
-    df = pd.read_csv("Car details v3.csv")  # Make sure CSV is uploaded
+    df = pd.read_csv("Car details v3.csv")
     df = df.dropna(subset=['engine', 'mileage', 'max_power', 'seats'])
     df['mileage'] = df['mileage'].str.extract(r'(\d+\.?\d*)').astype(float)
     df['engine'] = df['engine'].str.extract(r'(\d+\.?\d*)').astype(float)
@@ -35,7 +35,7 @@ def load_data():
 df = load_data()
 
 # ============================
-# 2. Encode Categorical Columns
+# Encode Categorical Columns
 # ============================
 categorical_cols = ['fuel', 'seller_type', 'transmission', 'owner', 'brand']
 encoders = {}
@@ -45,7 +45,7 @@ for col in categorical_cols:
     encoders[col] = le
 
 # ============================
-# 3. Features & Target
+# Features & Target
 # ============================
 features = ['age', 'km_driven', 'mileage', 'engine', 'max_power', 'seats'] + categorical_cols
 X = df[features]
@@ -56,7 +56,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 model = LinearRegression()
 model.fit(X_train, y_train)
 
-# Auto-fill defaults
+# Defaults
 default_mileage = round(df['mileage'].mean(), 2)
 default_engine = round(df['engine'].mean(), 2)
 default_max_power = round(df['max_power'].mean(), 2)
@@ -65,30 +65,48 @@ default_seller = "Individual"
 default_owner = "First Owner"
 
 # ============================
-# 4. Streamlit Layout
+# Page Config
 # ============================
-st.title("🚗 Car Price Prediction App")
+st.set_page_config(
+    page_title="🚗 Car Price Predictor",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Sidebar
+st.sidebar.title("🚗 Car Price Prediction")
+st.sidebar.image("https://cdn-icons-png.flaticon.com/512/743/743007.png", width=120)
+st.sidebar.markdown("""
+**Developed using:**  
+- Streamlit  
+- Pandas & NumPy  
+- Scikit-Learn  
+- Matplotlib & Seaborn
+""")
 menu = ["Predict", "Graphs", "View Data", "About"]
-choice = st.radio("Navigation", menu, horizontal=True)
+choice = st.sidebar.radio("Navigation", menu)
 
 # ============================
-# 5. Predict Section
+# Predict Section
 # ============================
 if choice == "Predict":
-    st.header("🔮 Predict Car Selling Price")
-    col1, col2 = st.columns(2)
-
-    with col1:
-        brand = st.text_input("Brand (e.g., Maruti, Hyundai)")
-        year = st.number_input("Year of Manufacture", min_value=1980, max_value=2025, value=2019)
-        km_driven = st.number_input("KM Driven", min_value=0, value=50000)
-
-    with col2:
-        fuel = st.text_input("Fuel Type (e.g., Petrol, Diesel, CNG)")
-        transmission = st.text_input("Transmission Type (Manual/Automatic)")
-        condition = st.selectbox("Car Condition", ["Excellent", "Good", "Average", "Poor"])
-
-    if st.button("Predict"):
+    st.markdown("## 🔮 Predict Car Selling Price")
+    
+    # Input cards
+    with st.container():
+        col1, col2 = st.columns(2)
+        with col1:
+            brand = st.text_input("Brand (e.g., Maruti, Hyundai)")
+            year = st.number_input("Year of Manufacture", min_value=1980, max_value=2025, value=2019)
+            km_driven = st.number_input("KM Driven", min_value=0, value=50000)
+        
+        with col2:
+            fuel = st.text_input("Fuel Type (Petrol, Diesel, CNG)")
+            transmission = st.text_input("Transmission Type (Manual/Automatic)")
+            condition = st.selectbox("Car Condition", ["Excellent", "Good", "Average", "Poor"])
+            seats = st.number_input("Seats (optional)", min_value=2, max_value=10, value=default_seats)
+    
+    if st.button("Predict Price"):
         age = 2025 - year
         brand_encoded = safe_encode(encoders['brand'], brand)
         fuel_encoded = safe_encode(encoders['fuel'], fuel)
@@ -102,52 +120,49 @@ if choice == "Predict":
 
         # Input vector
         input_vec = np.array([[age, km_driven, default_mileage, default_engine,
-                               default_max_power, default_seats,
+                               default_max_power, seats,
                                fuel_encoded, seller_encoded, transmission_encoded,
                                owner_encoded, brand_encoded]])
-
         base_price = model.predict(input_vec)[0]
         final_price = base_price * condition_multiplier
 
-        st.subheader(f"Predicted Selling Price: ₹{round(final_price, 2)}")
-        st.subheader("Cleaned Dataset")
-        st.dataframe(df, use_container_width=True)
+        # Display result in a metric box
+        st.markdown("### 💰 Predicted Selling Price")
+        st.metric(label="Price (INR)", value=f"₹ {round(final_price,2)}")
 
 # ============================
-# 6. Graphs Section
+# Graphs Section
 # ============================
 elif choice == "Graphs":
-    st.header("📊 Graphs & Scatter Plots")
-    x_axis = st.selectbox("Select X-axis", df.columns)
-    y_axis = st.selectbox("Select Y-axis", df.columns)
+    st.markdown("## 📊 Explore Graphs")
+    x_axis = st.selectbox("Select X-axis", df.columns, index=df.columns.get_loc('km_driven'))
+    y_axis = st.selectbox("Select Y-axis", df.columns, index=df.columns.get_loc('selling_price'))
 
-    plt.figure(figsize=(8,5))
-    plt.scatter(df[x_axis], df[y_axis], alpha=0.6, color='green')
-    plt.xlabel(x_axis)
-    plt.ylabel(y_axis)
+    fig, ax = plt.subplots(figsize=(8,5))
+    sns.scatterplot(data=df, x=x_axis, y=y_axis, hue='fuel', palette='Set2', s=80)
     plt.title(f"{x_axis} vs {y_axis}")
-    st.pyplot(plt)
+    st.pyplot(fig)
 
 # ============================
-# 7. View Data Section
+# View Data Section
 # ============================
 elif choice == "View Data":
-    st.header("📑 Full Cleaned Dataset")
+    st.markdown("## 📑 Full Cleaned Dataset")
     st.dataframe(df, use_container_width=True)
 
 # ============================
-# 8. About Section
+# About Section
 # ============================
 elif choice == "About":
-    st.header("ℹ️ About this App")
-    st.write("""
-    This **Car Price Prediction App** predicts the selling price of used cars based on important features.
+    st.markdown("## ℹ️ About this App")
+    st.markdown("""
+This **Car Price Prediction App** predicts the selling price of used cars using **Linear Regression**.
 
-    ### Features:
-    - Predict car price using **Linear Regression**
-    - Auto-fill default values for mileage, engine, power, seats
-    - Adjust price based on car condition (Excellent / Good / Average / Poor)
-    - Explore dataset and scatter plots
+**Features:**
+- Predict car price with optional condition-based adjustment
+- Auto-fill defaults for mileage, engine, power, and seats
+- Explore dataset with interactive scatter plots
+- User-friendly layout with metric boxes and side navigation
 
-    **Developed with ❤️ using Streamlit, Scikit-Learn, Pandas, Matplotlib & Seaborn**
+**Developed with ❤️ using:** Streamlit, Pandas, NumPy, Scikit-Learn, Matplotlib & Seaborn
     """)

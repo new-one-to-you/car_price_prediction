@@ -122,8 +122,8 @@ if choice == "Predict":
         st.markdown("### 💰 Predicted Selling Price")
         st.metric(label="Price (INR)", value=f"₹ {round(final_price,2)}")
 
-        # Display Car Details
-        st.markdown("### 🚗 Car Details")
+        # Display Car Details with defaults
+        st.markdown("### 🚗 Car Details (User Input & Defaults)")
         details = {
             "Brand": brand,
             "Year": year,
@@ -131,6 +131,11 @@ if choice == "Predict":
             "Fuel Type": fuel,
             "Transmission": transmission,
             "Seats": seats,
+            "Mileage (Default)": default_mileage,
+            "Engine CC (Default)": default_engine,
+            "Max Power (Default)": default_max_power,
+            "Seller Type (Default)": default_seller,
+            "Owner (Default)": default_owner,
             "Condition": condition
         }
         col1, col2 = st.columns(2)
@@ -150,33 +155,4 @@ elif choice == "Graphs":
 
     fig, ax = plt.subplots(figsize=(8,5))
     sns.scatterplot(data=df, x=x_axis, y=y_axis, hue='fuel', palette='Set2', s=80)
-    plt.title(f"{x_axis} vs {y_axis}")
-    st.pyplot(fig)
-
-# ============================
-# View Data Section
-# ============================
-elif choice == "View Data":
-    st.markdown("## 📑 Full Cleaned Dataset")
-    st.dataframe(df, use_container_width=True)
-
-# ============================
-# About Section
-# ============================
-elif choice == "About":
-    st.markdown("## ℹ️ About this App")
-    st.markdown("""
-This **Car Price Prediction App** predicts the selling price of used cars using **Linear Regression**.
-
-**Features:**
-- Predict car price with optional condition-based adjustment
-- Auto-fill defaults for mileage, engine, power, and seats
-- Explore dataset with interactive scatter plots
-- User-friendly layout with metric boxes and side navigation
-
-**Developed with ❤️ using:**  
-- Streamlit  
-- Pandas & NumPy  
-- Scikit-Learn  
-- Matplotlib & Seaborn
-    """)
+    plt.title(f"{
